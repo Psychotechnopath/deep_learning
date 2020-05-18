@@ -5,7 +5,7 @@ BEST_chollet_GRU_RESULTS = []
 BEST_chollet_LSTM_RESULTS = []
 BEST_sentdex_LSTM_RESULTS = []
 
-
+#Read in all results, append the validation accuracy of the last epoch (which corresponds to validation accuracy of the model)
 for i in os.listdir('history_objects')[1:]:
     if 'chollet_RNN' in i:
         with open(f'history_objects/{i}', 'rb') as f_RNN:
@@ -25,13 +25,14 @@ for i in os.listdir('history_objects')[1:]:
             BEST_sentdex_LSTM_RESULTS.append(result_sentdex_lstm['val_accuracy'][99])
 
 
-#Results are added to list in this order (See print statements).
+#Results are added to list in this order in previous for-loop.
 tup = (10, 15, 1, 2, 3, 4, 5)
 BEST_chollet_RNN_RESULTS = sorted(list(zip(tup, BEST_chollet_RNN_RESULTS)), key=lambda x: x[0])
 BEST_chollet_GRU_RESULTS = sorted(list(zip(tup, BEST_chollet_GRU_RESULTS)), key=lambda x: x[0])
 BEST_chollet_LSTM_RESULTS = sorted(list(zip(tup, BEST_chollet_LSTM_RESULTS)), key=lambda x:x[0])
 BEST_sentdex_LSTM_RESULTS = sorted(list(zip(tup, BEST_sentdex_LSTM_RESULTS)), key=lambda x:x[0])
 
+#Make the actual plot
 from matplotlib import pyplot as plt
 plt.figure()
 plt.plot(*zip(*BEST_chollet_RNN_RESULTS), '-o', label='RNN Chollet')

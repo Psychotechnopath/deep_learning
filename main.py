@@ -7,14 +7,11 @@ from tensorflow_core.python.keras.layers import LSTM, GRU, SimpleRNN, Dense, Dro
 import pickle
 
 RATIOS_TO_PREDICT = [(1, 'future_1day'), (2, 'future_2days'), (3, 'future_3days'), (4, 'future_4days'), (5,'future_5days'), (10, 'future_10days'), (15,'future_15days')]
-BEST_chollet_RNN_RESULTS = []
-BEST_chollet_GRU_RESULTS = []
-BEST_chollet_LSTM_RESULTS = []
-BEST_sentdex_LSTM_RESULTS = []
 BATCH_SIZE = 106
-LOOKBACK = 30
+LOOKBACK = 1440
 DROPOUT = 0.2
 
+#Main loop executing all 28 models
 for day_number, ratio in RATIOS_TO_PREDICT:
     btc_usd_df = pd.read_csv("pre_processed_btc_usd.csv")
     btc_usd_df.set_index('Date_time')
@@ -43,15 +40,7 @@ for day_number, ratio in RATIOS_TO_PREDICT:
     stdsc = StandardScaler()
     x_scaled = stdsc.fit_transform(x)
 
-    #Check how imbalanced data is.
-    sell = []
-    buy = []
-    for target in y:
-        if target ==0:
-            sell.append(target)
-        else:
-            buy.append(target)
-
+    #Use Keras TimeSeriesGenerator to generate the time series data
     train_gen = TimeseriesGenerator(x_scaled, y, length=LOOKBACK, batch_size=BATCH_SIZE, start_index=0, end_index=80136, shuffle=True)
     test_gen = TimeseriesGenerator(x_scaled, y, length=LOOKBACK, batch_size=BATCH_SIZE, start_index=80137, end_index=None)
 
@@ -72,9 +61,9 @@ for day_number, ratio in RATIOS_TO_PREDICT:
                                         epochs=100,
                                         validation_data=test_gen,
                                         verbose=0)
+    #Write history object to pickle, for plotting later
     with open(f'history_objects/{ratio}_chollet_RNN', 'wb') as f:
         pickle.dump(history_chollet_RNN.history, f)
-    BEST_chollet_RNN_RESULTS.append((day_number, round(max(history_chollet_RNN.history['val_accuracy']), 3)))
     print(f'{ratio}_chollet_RNN model finished, history object succesfully written to pickle.')
 
 
@@ -94,9 +83,9 @@ for day_number, ratio in RATIOS_TO_PREDICT:
                                                     epochs=100,
                                                     validation_data=test_gen,
                                                     verbose=0)
+    #Write history object to pickle, for plotting later
     with open(f'history_objects/{ratio}_chollet_GRU', 'wb') as f2:
         pickle.dump(history_chollet_GRU.history, f2)
-    BEST_chollet_GRU_RESULTS.append((day_number, round(max(history_chollet_GRU.history['val_accuracy']), 3)))
     print(f'{ratio}_chollet_GRU model finished, history object succesfully written to pickle. ')
 
 
@@ -112,14 +101,13 @@ for day_number, ratio in RATIOS_TO_PREDICT:
                           recurrent_dropout=DROPOUT))
     chollet_LSTM.add(Dense(1, activation='sigmoid'))
     chollet_LSTM.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['accuracy'])
-    print(chollet_LSTM.summary())
     history_chollet_LSTM = chollet_LSTM.fit_generator(train_gen,
                                                       epochs=100,
                                                       validation_data=test_gen,
                                                       verbose=0)
+    #Write history object to pickle, for plotting later
     with open(f'history_objects/{ratio}_chollet_LSTM', 'wb') as f3:
         pickle.dump(history_chollet_LSTM.history, f3)
-    BEST_chollet_LSTM_RESULTS.append((day_number, round(max(history_chollet_LSTM.history['val_accuracy']), 3)))
     print(f'{ratio}_chollet_LSTM model finished, history object successfully written to pickle.')
 
 
@@ -148,9 +136,9 @@ for day_number, ratio in RATIOS_TO_PREDICT:
                                                       epochs=100,
                                                       validation_data=test_gen,
                                                       verbose=0)
+    #Write history object to pickle, for plotting later
     with open(f'history_objects/{ratio}_sentdex_LSTM', 'wb') as f4:
         pickle.dump(history_sentdex_LSTM.history, f4)
-    BEST_sentdex_LSTM_RESULTS.append((day_number, round(max(history_sentdex_LSTM.history['val_accuracy']), 3)))
     print(f'{ratio}_sentdex_LSTM model finished, history object successfully written to pickle.')
 
 
